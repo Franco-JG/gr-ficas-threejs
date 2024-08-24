@@ -30,14 +30,14 @@ const positionAttribute = new THREE.BufferAttribute(vertices, 3);
 geometry.setAttribute('position', positionAttribute);
 
 // Definir un color sólido en el shader
-const vertexShader = `
+const vertexShader = /*glsl*/`
     uniform float scale;
     void main() {
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position * scale, 1.0);
     }
 `;
 
-const fragmentShader = `
+const fragmentShader = /*glsl*/`
     uniform vec3 color;
     void main() {
         gl_FragColor = vec4(color, 1.0); // Usar el color definido en el shader
