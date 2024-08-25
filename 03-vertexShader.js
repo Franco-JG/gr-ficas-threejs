@@ -1,14 +1,27 @@
 import * as THREE from 'three';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
+// Cargar la textura
+const textureLoader = new THREE.TextureLoader();
+const texture = textureLoader.load("/image.jpg");
+
 // Crear la escena
 const scene = new THREE.Scene();
 const axesHelper = new THREE.AxesHelper(10);
-// scene.add(axesHelper);
+scene.add(axesHelper);
 
-// Crear la cámara
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.z = 3;
+// Crear la cámara ortográfica
+const aspect = window.innerWidth / window.innerHeight;
+const frustumSize = 2;
+const camera = new THREE.OrthographicCamera(
+    -frustumSize * aspect / 2,  // left
+    frustumSize * aspect / 2,   // right
+    frustumSize / 2,            // top
+    -frustumSize / 2,           // bottom
+    0.1,                        // near
+    1000                        // far
+);
+camera.position.z = 2;
 
 // Crear el renderizador
 const renderer = new THREE.WebGLRenderer();
@@ -22,25 +35,41 @@ const geometry = new THREE.BufferGeometry();
 const vertices = new Float32Array([
     0, 1, 0,    // Vértice 1
    -1, -1, 0,   // Vértice 2
-    1, -1, 0,   // Vértice 3
+    1, -1, 0    // Vértice 3
+]);
+
+// Definir las coordenadas UV para la textura
+const uvs = new Float32Array([
+    0.5, 1.0,  // Vértice 1
+    0.0, 0.0,  // Vértice 2
+    1.0, 0.0   // Vértice 3
 ]);
 
 // Crear un BufferAttribute para los vértices
 const positionAttribute = new THREE.BufferAttribute(vertices, 3);
 geometry.setAttribute('position', positionAttribute);
 
-// Definir un color sólido en el shader
+// Crear un BufferAttribute para las coordenadas UV
+const uvAttribute = new THREE.BufferAttribute(uvs, 2);
+geometry.setAttribute('uv', uvAttribute);
+
+// Shader de vértices
 const vertexShader = /*glsl*/`
+    varying vec2 vUv;
     uniform float scale;
     void main() {
+        vUv = uv;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position * scale, 1.0);
     }
 `;
 
+// Shader de fragmentos
 const fragmentShader = /*glsl*/`
-    uniform vec3 color;
+    varying vec2 vUv;
+    uniform sampler2D u_texture;
     void main() {
-        gl_FragColor = vec4(color, 1.0); // Usar el color definido en el shader
+        vec4 texColor = texture2D(u_texture, vUv);
+        gl_FragColor = texColor;
     }
 `;
 
@@ -49,7 +78,7 @@ const material = new THREE.ShaderMaterial({
     fragmentShader,
     uniforms: {
         scale: { value: 1.0 }, // Escala inicial
-        color: { value: new THREE.Color(0xa5d9ca) } // Color #a5d9ca
+        u_texture: { value: texture }
     }
 });
 
@@ -57,17 +86,22 @@ const material = new THREE.ShaderMaterial({
 const mesh = new THREE.Mesh(geometry, material);
 scene.add(mesh);
 
-// Función de animación
+// Agregar controles de órbita para la cámara
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableZoom = true; // Habilitar zoom
+controls.enablePan = true;  // Habilitar desplazamiento (pan)
+
 let scaleDirection = 1;
+// Función de animación
 function animate() {
     requestAnimationFrame(animate);
-
+    
     // Escalamiento animación
     material.uniforms.scale.value += scaleDirection * 0.01;
     if (material.uniforms.scale.value > 1.0 || material.uniforms.scale.value < 0.5) {
-        scaleDirection *= -1;  // Invertir dirección
-    }
-
+            scaleDirection *= -1;  // Invertir dirección
+        }
+    controls.update();  // Actualizar los controles
     renderer.render(scene, camera);
 }
 
@@ -76,7 +110,16 @@ animate();
 
 // Ajustar el tamaño del renderizador cuando se cambia el tamaño de la ventana
 window.addEventListener('resize', () => {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
+    const aspect = window.innerWidth / window.innerHeight;
+
+    // Actualizar los parámetros de la cámara ortográfica
+    camera.left = -frustumSize * aspect / 2;
+    camera.right = frustumSize * aspect / 2;
+    camera.top = frustumSize / 2;
+    camera.bottom = -frustumSize / 2;
+
     camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+
