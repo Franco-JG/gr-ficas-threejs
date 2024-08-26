@@ -1,5 +1,7 @@
 import * as THREE from 'three';
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+// import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import vertexShader from './src/shaders/vertexShader.glsl?raw';
+import fragmentShader from './src/shaders/fragmentShader.glsl?raw';
 
 // Cargar la textura
 const textureLoader = new THREE.TextureLoader();
@@ -7,8 +9,6 @@ const texture = textureLoader.load("/image.jpg");
 
 // Crear la escena
 const scene = new THREE.Scene();
-const axesHelper = new THREE.AxesHelper(10);
-scene.add(axesHelper);
 
 // Crear la cámara ortográfica
 const aspect = window.innerWidth / window.innerHeight;
@@ -19,9 +19,9 @@ const camera = new THREE.OrthographicCamera(
     frustumSize / 2,            // top
     -frustumSize / 2,           // bottom
     0.1,                        // near
-    1000                        // far
+    10                          // far (reducido para 2D)
 );
-camera.position.z = 2;
+camera.position.set(0, 0, 2);  // Centrando la cámara
 
 // Crear el renderizador
 const renderer = new THREE.WebGLRenderer();
@@ -31,11 +31,11 @@ document.body.appendChild(renderer.domElement);
 // Crear una geometría de triángulo utilizando BufferGeometry
 const geometry = new THREE.BufferGeometry();
 
-// Definir los vértices del triángulo
+// Definir los vértices del triángulo (ya son 2D)
 const vertices = new Float32Array([
-    0, 1, 0,    // Vértice 1
-   -1, -1, 0,   // Vértice 2
-    1, -1, 0    // Vértice 3
+    0, 1,     // Vértice 1
+   -1, -1,    // Vértice 2
+    1, -1,    // Vértice 3
 ]);
 
 // Definir las coordenadas UV para la textura
@@ -46,33 +46,16 @@ const uvs = new Float32Array([
 ]);
 
 // Crear un BufferAttribute para los vértices
-const positionAttribute = new THREE.BufferAttribute(vertices, 3);
+const positionAttribute = new THREE.BufferAttribute(vertices, 2);
 geometry.setAttribute('position', positionAttribute);
 
 // Crear un BufferAttribute para las coordenadas UV
 const uvAttribute = new THREE.BufferAttribute(uvs, 2);
 geometry.setAttribute('uv', uvAttribute);
 
-// Shader de vértices
-const vertexShader = /*glsl*/`
-    varying vec2 vUv;
-    uniform float scale;
-    void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position * scale, 1.0);
-    }
-`;
 
-// Shader de fragmentos
-const fragmentShader = /*glsl*/`
-    varying vec2 vUv;
-    uniform sampler2D u_texture;
-    void main() {
-        vec4 texColor = texture2D(u_texture, vUv);
-        gl_FragColor = texColor;
-    }
-`;
 
+// Crear el material shader
 const material = new THREE.ShaderMaterial({
     vertexShader,
     fragmentShader,
@@ -86,10 +69,10 @@ const material = new THREE.ShaderMaterial({
 const mesh = new THREE.Mesh(geometry, material);
 scene.add(mesh);
 
-// Agregar controles de órbita para la cámara
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableZoom = true; // Habilitar zoom
-controls.enablePan = true;  // Habilitar desplazamiento (pan)
+// Opcional: Agregar controles de órbita para la cámara
+// const controls = new OrbitControls(camera, renderer.domElement);
+// controls.enableZoom = true; // Habilitar zoom
+// controls.enablePan = true;  // Habilitar desplazamiento (pan)
 
 let scaleDirection = 1;
 // Función de animación
@@ -99,9 +82,10 @@ function animate() {
     // Escalamiento animación
     material.uniforms.scale.value += scaleDirection * 0.01;
     if (material.uniforms.scale.value > 1.0 || material.uniforms.scale.value < 0.5) {
-            scaleDirection *= -1;  // Invertir dirección
-        }
-    controls.update();  // Actualizar los controles
+        scaleDirection *= -1;  // Invertir dirección
+    }
+    
+    // controls.update();  // Actualizar los controles
     renderer.render(scene, camera);
 }
 
@@ -121,5 +105,3 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
-
-
