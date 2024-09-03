@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-// import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import vertexShader from './src/shaders/vertexShader.glsl?raw';
 import fragmentShader from './src/shaders/fragmentShader.glsl?raw';
 
@@ -9,19 +9,17 @@ const texture = textureLoader.load("/image.jpg");
 
 // Crear la escena
 const scene = new THREE.Scene();
+const axisHelper = new THREE.AxesHelper(3)
+scene.add(axisHelper)
 
 // Crear la cámara ortográfica
-const aspect = window.innerWidth / window.innerHeight;
-const frustumSize = 2;
-const camera = new THREE.OrthographicCamera(
-    -frustumSize * aspect / 2,  // left
-    frustumSize * aspect / 2,   // right
-    frustumSize / 2,            // top
-    -frustumSize / 2,           // bottom
-    0.1,                        // near
-    10                          // far (reducido para 2D)
-);
-camera.position.set(0, 0, 2);  // Centrando la cámara
+// 1. Crear la cámara de perspectiva
+const fov = 75; // Campo de visión (en grados)
+const aspect = window.innerWidth / window.innerHeight; // Relación de aspecto
+const near = 0.1; // Plano cercano
+const far = 1000; // Plano lejano
+const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+camera.position.z = 3;  // Centrando la cámara
 
 // Crear el renderizador
 const renderer = new THREE.WebGLRenderer();
@@ -70,7 +68,7 @@ const mesh = new THREE.Mesh(geometry, material);
 scene.add(mesh);
 
 // Opcional: Agregar controles de órbita para la cámara
-// const controls = new OrbitControls(camera, renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
 // controls.enableZoom = true; // Habilitar zoom
 // controls.enablePan = true;  // Habilitar desplazamiento (pan)
 
@@ -78,12 +76,6 @@ let scaleDirection = 1;
 // Función de animación
 function animate() {
     requestAnimationFrame(animate);
-    
-    // Escalamiento animación
-    material.uniforms.scale.value += scaleDirection * 0.01;
-    if (material.uniforms.scale.value > 1.0 || material.uniforms.scale.value < 0.5) {
-        scaleDirection *= -1;  // Invertir dirección
-    }
     
     // controls.update();  // Actualizar los controles
     renderer.render(scene, camera);
@@ -93,15 +85,3 @@ function animate() {
 animate();
 
 // Ajustar el tamaño del renderizador cuando se cambia el tamaño de la ventana
-window.addEventListener('resize', () => {
-    const aspect = window.innerWidth / window.innerHeight;
-
-    // Actualizar los parámetros de la cámara ortográfica
-    camera.left = -frustumSize * aspect / 2;
-    camera.right = frustumSize * aspect / 2;
-    camera.top = frustumSize / 2;
-    camera.bottom = -frustumSize / 2;
-
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
