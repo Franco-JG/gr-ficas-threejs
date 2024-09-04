@@ -59,8 +59,8 @@ function animate() {
     requestAnimationFrame(animate);
     
     // Rotar la cámara alrededor del eje Y
-    camera.position.x = Math.sin(Date.now() * 0.001) * 5;
-    camera.position.z = Math.cos(Date.now() * 0.001) * 5;
+    // camera.position.x = Math.sin(Date.now() * 0.001) * 5;
+    // camera.position.z = Math.cos(Date.now() * 0.001) * 5;
 
     controls.update();
     renderer.render(scene, camera);
