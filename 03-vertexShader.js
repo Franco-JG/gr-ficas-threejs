@@ -12,7 +12,6 @@ const scene = new THREE.Scene();
 const axisHelper = new THREE.AxesHelper(3)
 scene.add(axisHelper)
 
-// Crear la cámara ortográfica
 // 1. Crear la cámara de perspectiva
 const fov = 75; // Campo de visión (en grados)
 const aspect = window.innerWidth / window.innerHeight; // Relación de aspecto
@@ -65,6 +64,8 @@ const material = new THREE.ShaderMaterial({
 
 // Crear el triángulo utilizando el material shader y la geometría
 const mesh = new THREE.Mesh(geometry, material);
+console.log(mesh.matrix)
+console.log(mesh.matrixWorld)
 scene.add(mesh);
 
 // Opcional: Agregar controles de órbita para la cámara
@@ -72,7 +73,6 @@ const controls = new OrbitControls(camera, renderer.domElement);
 // controls.enableZoom = true; // Habilitar zoom
 // controls.enablePan = true;  // Habilitar desplazamiento (pan)
 
-let scaleDirection = 1;
 // Función de animación
 function animate() {
     requestAnimationFrame(animate);
